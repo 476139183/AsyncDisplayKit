@@ -29,8 +29,7 @@
 {
   ASDisplayNodeAssertMainThread();
   if (_changeSetBatchUpdateCounter <= 0) {
-    _changeSet = [_ASHierarchyChangeSet new];
-    _changeSetBatchUpdateCounter = 0;
+    _changeSet = [[_ASHierarchyChangeSet alloc] initWithOldData:[self _itemCountsFromDataSource]];
   }
   _changeSetBatchUpdateCounter++;
 }
@@ -44,7 +43,7 @@
   NSAssert(_changeSetBatchUpdateCounter >= 0, @"endUpdatesAnimated:completion: called without having a balanced beginUpdates call");
   
   if (_changeSetBatchUpdateCounter == 0) {
-    [_changeSet markCompleted];
+    [_changeSet markCompletedWithNewItemCounts:[self _itemCountsFromDataSource]];
     
     [super beginUpdates];
 
@@ -171,6 +170,17 @@
   } else {
     [super moveRowAtIndexPath:indexPath toIndexPath:newIndexPath withAnimationOptions:animationOptions];
   }
+}
+
+- (NSArray <NSNumber *> *)_itemCountsFromDataSource
+{
+  id<ASDataControllerSource> source = self.dataSource;
+  NSInteger sectionCount = [source numberOfSectionsInDataController:self];
+  NSMutableArray<NSNumber *> *result = [NSMutableArray arrayWithCapacity:sectionCount];
+  for (NSInteger i = 0; i < sectionCount; i++) {
+    [result addObject:@([source dataController:self rowsInSection:i])];
+  }
+  return result;
 }
 
 @end
